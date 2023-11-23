@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:7.0
+    hostname: mongodb
+    restart: unless-stopped
+    env_file: ./.env
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER:-mongodb_user}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD:-mongodb_pass}
+      - MONGO_INITDB_DATABASE=${MONGODB_DATABASE:-mongodb_db}
+    expose:
+      - ${MONGODB_CONTAINER_PORT:-27017}
+    volumes:
+      - ./db:/data/db
+  app:
+    depends_on:
+      - mongodb
+    build:
+      context: ./
+    hostname: app
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - ${NODE_HOST_PORT:-5000}:${NODE_CONTAINER_PORT:-5000}
+    environment:
+      - DB_HOST=${MONGODB_HOST:-mongodb}
+      - DB_USER=${MONGODB_USER:-mongodb_user}
+      - DB_PASSWORD=${MONGODB_PASSWORD:-mongodb_pass}
+      - DB_NAME=$MONGODB_DATABASE
+      - DB_PORT=${MONGODB_HOST_PORT:-27017}
+    volumes:
+      - ./api-user-auth:/opt/app
+      - /opt/app/node_modules
+
+volumes:
+  db:
